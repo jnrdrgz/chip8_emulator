@@ -32,9 +32,10 @@ int random_between(int mn, int mx) {
 }
 
 float random_betweenf(float min, float max) {
-	float scale = rand() / (float)RAND_MAX; // [0, 1.0] 
-	return min + scale * (max - min);      // [min, max]
+	float scale = rand() / (float)RAND_MAX;
+	return min + scale * (max - min);
 }
+
 namespace C8 {
 	unsigned char hx(unsigned char c);
 }
@@ -86,7 +87,7 @@ struct Screen {
 		}
 	}
 
-	void sprite_zoomed(int x, int y, int n, int I, unsigned char* mem, int scale_factor = 10) {
+	bool sprite_zoomed(int x, int y, int n, int I, unsigned char* mem, int scale_factor = 10) {
 		if (debug) printf("--------------draw---------------\n");
 		if (debug) printf("drawing at: x:%d,y:%d,n:%d,i_%d\n", x, y, n, I);
 		int scaled_x = x * scale_factor;
@@ -103,25 +104,34 @@ struct Screen {
 
 		
 		auto draw_10x10 = [&](int p) {
+			bool collision = true;
 			for (int i = 0; i < scale_factor; i++) {
 				for (int j = 0; j < scale_factor; j++) {
+					Uint32 v = pixels[p];
 					pixels[p] ^= 0xFFFFFFFF;
+					collision = v && !pixels[p] && collision;
 					p += 1;
 				}
 				p += screen_w;
 				p -= scale_factor;
+
 			}
+			return collision;
 		};
 
+		bool collision = false;
 		for (int h = 0; h < n; h++) {
 			unsigned char nn = *val;
 			//printf("will draw %d\n", nn);
 			int ind = 7*scale_factor;
 			
+			
 			for (Uint32 i = 0; i < 8; i++) {
 				if (debug) printf("%d", (nn >> i) & 1);
 				if ((nn >> i) & 1) {
-					draw_10x10(pos+ind);
+					if (draw_10x10(pos + ind)) {
+						collision = true;
+					}
 				}
 				pos += scale_factor;
 				ind -= scale_factor*2;
@@ -133,6 +143,8 @@ struct Screen {
 			val++;
 		}
 		if (debug) printf("--------------draw---------------\n");
+		
+		return collision;
 	}
 
 	SDL_Texture* texture = nullptr;
@@ -189,8 +201,9 @@ namespace C8 {
 	struct Chip8
 	{
 		Chip8() : pc_text(" ",screen_w-60,0,30),
-			registers_text(" ", 0, screen_h-20, 20),
-			current_instruction(" ", screen_w - 100, 40, 30)
+			registers_text1(" ", 0, screen_h - 50, 20),
+			registers_text2(" ", 0, screen_h - 20, 20),
+			current_instruction(" ", screen_w - 90, 40, 30)
 		{
 			unsigned char chars[] = {
 				0xF0, 0x90, 0x90, 0x90, 0xF0, 0x20, 0x60, 0x20, 0x20, 0x70, 
@@ -548,22 +561,35 @@ namespace C8 {
 			pc_text.update_w(program_counter.str());
 
 			std::stringstream registers;
-			for (int i = 0; i < 16; i++) {
+			for (int i = 0; i < 9; i++) {
 				registers << "V" << i << ": " << (int)V[i] << " ";
 			}
-			registers_text.update_w(registers.str());
+			registers_text1.update_w(registers.str());
+
+			registers.str(std::string());
+			for (int i = 9; i < 16; i++) {
+				registers << "V" << i << ": " << (int)V[i] << " ";
+			}
+			registers_text2.update_w(registers.str());
+
 
 			std::stringstream inst;
 			inst << "CInst: " << xh(current_decoded_ins[0]) << xh(current_decoded_ins[1]) << xh(current_decoded_ins[2]) << xh(current_decoded_ins[3]);
 			current_instruction.update_w(inst.str());
 
 			pc_text.render();
-			registers_text.render();
+			registers_text1.render();
+			registers_text2.render();
 			current_instruction.render();
 		}
 
 		void set_pixel(unsigned char x, unsigned char y, unsigned char n) {
-			screen.sprite_zoomed(x, y, n, I, memory);
+			if (screen.sprite_zoomed(x, y, n, I, memory)) {
+				V[0xf] = 1;
+			}
+			else {
+				V[0xf] = 0;
+			}
 		}
 
 		unsigned char V[16]{ 0 }, DelayTimer{ 0 }, SoundTimer{0}, SP, keys[16];
@@ -575,7 +601,8 @@ namespace C8 {
 		const Uint8* kbstate = nullptr;
 	
 		Text pc_text;
-		Text registers_text;
+		Text registers_text1;
+		Text registers_text2;
 		Text current_instruction;
 
 		bool rom_2b = false;
@@ -598,7 +625,7 @@ int main(int argc, char* args[])
 
 	C8::Chip8 c8;
 	c8.rom_2b = true;
-	c8.load_rom("pong.bin");
+	c8.load_rom("roms/pong");
 	c8.run();
 	c8.print_memory(0x1, 0x100, true);
 	c8.print_registers();
