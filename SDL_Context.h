@@ -36,8 +36,8 @@ namespace SDL {
 		static TTF_Font* font;
 		static SDL_Event event;
 		bool running = false; 
-		const int screen_w = 640;
-		const int screen_h = 320;
+		static const int screen_w;
+		static const int screen_h;
 
 	private:
 		SDL_Window* window = NULL;
