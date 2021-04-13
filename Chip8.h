@@ -23,6 +23,8 @@ namespace C8 {
 		Chip8(int scale);
 
 		void load_rom(std::string rom_path);
+		void load_chars_in_mem();
+
 		void print_registers();
 		void print_memory(int from, int to, bool print_zeroes);
 
@@ -34,7 +36,11 @@ namespace C8 {
 		void cycle();
 		void print_and_draw();
 
+		void reset();
+		
 		void set_pixel(unsigned char x, unsigned char y, unsigned char n);
+
+
 
 		unsigned char V[16]{ 0 }, DelayTimer{ 0 }, SoundTimer{ 0 }, SP, keys[16];
 		unsigned char memory[4096] = { 0 };

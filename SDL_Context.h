@@ -19,7 +19,7 @@ namespace SDL {
 
 			TTF_Init();
 			
-			font = TTF_OpenFont("cafeteria-black.ttf", 25);
+			font = TTF_OpenFont("roboto.ttf", 25);
 			if (!font) {
 				printf("error loading font\n");
 			}
@@ -38,8 +38,6 @@ namespace SDL {
 		bool running = false; 
 		static const int screen_w;
 		static const int screen_h;
-
-	private:
-		SDL_Window* window = NULL;
+		static SDL_Window* window;
 	};
 }

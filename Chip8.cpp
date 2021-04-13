@@ -1,55 +1,31 @@
 #include "Chip8.h"
 
 unsigned char C8::hx(unsigned char c) {
-	if (c == '0') return 0x0;
-	if (c == '1') return 0x1;
-	if (c == '2') return 0x2;
-	if (c == '3') return 0x3;
-	if (c == '4') return 0x4;
-	if (c == '5') return 0x5;
-	if (c == '6') return 0x6;
-	if (c == '7') return 0x7;
-	if (c == '8') return 0x8;
-	if (c == '9') return 0x9;
-	if (c == 'a') return 0xA;
-	if (c == 'b') return 0xB;
-	if (c == 'c') return 0xC;
-	if (c == 'd') return 0xD;
-	if (c == 'e') return 0xE;
-	if (c == 'f') return 0xF;
-	return 'x';
+	if (c > 58) c -= 39;
+	return c - 48;
+
 }
 
 unsigned char C8::xh(unsigned char c) {
-	if (c == 0x0) return '0';
-	if (c == 0x1) return '1';
-	if (c == 0x2) return '2';
-	if (c == 0x3) return '3';
-	if (c == 0x4) return '4';
-	if (c == 0x5) return '5';
-	if (c == 0x6) return '6';
-	if (c == 0x7) return '7';
-	if (c == 0x8) return '8';
-	if (c == 0x9) return '9';
-	if (c == 0xA) return 'a';
-	if (c == 0xB) return 'b';
-	if (c == 0xC) return 'c';
-	if (c == 0xD) return 'd';
-	if (c == 0xE) return 'e';
-	if (c == 0xF) return 'f';
-	return 'x';
+	if (c > 9) c += 39;
+	return c + 48;
 }
+
 unsigned char C8::random_uchar() {
 	unsigned char n = (unsigned char)rand() % (255);
 	return n;
 }
 
-C8::Chip8::Chip8(int scale = 10) : pc_text(" ", screen_w - 60, 0, 30),
-registers_text1(" ", 0, screen_h - 50, 20),
-registers_text2(" ", 0, screen_h - 20, 20),
-current_instruction(" ", screen_w - 90, 40, 30),
-screen{ scale }
+C8::Chip8::Chip8(int scale = 10) : pc_text(" ", screen_w - 90, 0, 30),
+	registers_text1(" ", 0, screen_h - 50, 20),
+	registers_text2(" ", 0, screen_h - 20, 20),
+	current_instruction(" ", screen_w - 110, 40, 30),
+	screen{ scale }
 {
+	load_chars_in_mem();
+}
+
+void C8::Chip8::load_chars_in_mem() {
 	unsigned char chars[] = {
 		0xF0, 0x90, 0x90, 0x90, 0xF0, 0x20, 0x60, 0x20, 0x20, 0x70,
 		0xF0, 0x10, 0xF0, 0x80, 0xF0, 0xF0, 0x10, 0xF0, 0x10, 0xF0,
@@ -139,7 +115,6 @@ void C8::Chip8::decode() {
 
 void C8::Chip8::execute() {
 	unsigned cod = current_decoded_ins[0];
-	printf("COD::::%d\n", cod);
 
 	unsigned char x = current_decoded_ins[1];
 	unsigned char y = current_decoded_ins[2];
@@ -384,6 +359,7 @@ void C8::Chip8::cycle() {
 	fetch();
 	decode();
 	execute();
+
 	if (DelayTimer > 0) {
 		DelayTimer--;
 	}
@@ -408,13 +384,23 @@ void C8::Chip8::print_and_draw() {
 
 
 	std::stringstream inst;
-	inst << "CInst: " << xh(current_decoded_ins[0]) << xh(current_decoded_ins[1]) << xh(current_decoded_ins[2]) << xh(current_decoded_ins[3]);
+	inst << "Inst: " << xh(current_decoded_ins[0]) << xh(current_decoded_ins[1]) << xh(current_decoded_ins[2]) << xh(current_decoded_ins[3]);
 	current_instruction.update_w(inst.str());
 
 	pc_text.render();
 	registers_text1.render();
 	registers_text2.render();
 	current_instruction.render();
+}
+
+void C8::Chip8::reset() {
+	for (int i = 0; i < 4096; i++) {
+		memory[i] = 0;
+	}
+
+	load_chars_in_mem();
+	screen.clear();
+	PC = 0;
 }
 
 void C8::Chip8::set_pixel(unsigned char x, unsigned char y, unsigned char n) {

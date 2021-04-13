@@ -1,6 +1,6 @@
 #include "Text.h"
 
-Text::Text(std::string text, int x, int y, int w, int h) : text{ text }, rct{ x,y,w,h }, color{ 255,0,0,255 } {
+Text::Text(std::string text, int x, int y, int w, int h) : text{ text }, rct{ x,y,w,h }, color{ 0xf2,0xa1,0x54,255 } {
 	load_text();
 }
 
@@ -8,7 +8,7 @@ Text::Text(std::string text, int x, int y, int w, int h, SDL_Color color) : text
 	load_text();
 }
 
-Text::Text(std::string text, int x, int y, int h) : text{ text }, color{ 255,0,0,255 }{
+Text::Text(std::string text, int x, int y, int h) : text{ text }, color{ 0xac, 0xdb, 0xdf, 255 }{
 	load_text_and_rct(x, y, h);
 }
 
@@ -56,6 +56,6 @@ void Text::update_w(std::string text) {
 
 void Text::render() {
 	SDL_SetRenderDrawColor(SDL::Context::renderer, 122, 122, 122, 255);
-	SDL_RenderDrawRect(SDL::Context::renderer, &rct);
+	//SDL_RenderDrawRect(SDL::Context::renderer, &rct);
 	SDL_RenderCopy(SDL::Context::renderer, texture, nullptr, &rct);
 }

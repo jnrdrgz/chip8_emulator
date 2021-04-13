@@ -6,6 +6,10 @@
 
 #include "Chip8.h"
 
+#include <string>
+#include <iostream>
+#include <filesystem>
+
 #define DEBUG 0
 
 const int screen_w = SDL::Context::screen_w;
@@ -18,17 +22,20 @@ int main(int argc, char* args[])
 	(void)argc;
 	(void)args;
 
-	SDL::Context sdl_context("Test SDL");
+	SDL::Context sdl_context("CHIP-8");
 
 	Uint32 startFTime = SDL_GetTicks();
 	float fps = (1.0f / 55.0f) * 1000.0f;
 	bool running = true;
 
-	C8::Chip8 c8(8);
-	c8.load_rom("roms/missile");
+	C8::Chip8 c8(10);
+	c8.load_rom("roms/logo.bin");
 	c8.print_memory(0x1, 0x100, true);
 	c8.print_registers();
 	
+	bool auto_cycling = true;
+	int mhz = 1;
+
 	Uint8 pressed_keys[255] = { 0 };
 	auto if_key_pressed = [&](Uint8 key, const Uint8* kbstate, auto&& f) {
 		if (kbstate[key]) {
@@ -42,9 +49,6 @@ int main(int argc, char* args[])
 		}
 
 	};
-
-	bool auto_cycling = false;
-	int mhz = 1;
 
 	while (running) {
 
@@ -61,6 +65,18 @@ int main(int argc, char* args[])
 		if (kbstate[SDL_SCANCODE_N]) {
 			auto_cycling = false;
 		}
+
+		if_key_pressed(SDL_SCANCODE_R, kbstate, [&]() {
+			c8.reset();
+			auto_cycling = false;
+		});
+
+		if_key_pressed(SDL_SCANCODE_LEFT, kbstate, [&]() {
+			});
+
+		if_key_pressed(SDL_SCANCODE_LEFT, kbstate, [&]() {
+			});
+
 
 		if_key_pressed(SDL_SCANCODE_UP, kbstate, [&]() {
 			if (auto_cycling) {
@@ -84,17 +100,11 @@ int main(int argc, char* args[])
 
 
 		while (SDL_PollEvent(&SDL::Context::event)) {
-
 			if (SDL::Context::event.type == SDL_QUIT) {
 				running = false;
 			}
-			if (SDL::Context::event.type == SDL_MOUSEMOTION) {
-
-			}
 			if (SDL::Context::event.type == SDL_KEYDOWN) {
-				if (SDL::Context::event.key.keysym.sym == SDLK_RIGHT) {
-
-				}
+				if (SDL::Context::event.key.keysym.sym == SDLK_RIGHT) {}
 			}
 			if (SDL::Context::event.type == SDL_KEYUP) {
 				switch (SDL::Context::event.key.keysym.sym) {
@@ -102,6 +112,12 @@ int main(int argc, char* args[])
 				case SDLK_DOWN:
 					break;
 				}
+			}
+			if (SDL::Context::event.type == SDL_DROPFILE){
+				const char* dropped_filedir = SDL::Context::event.drop.file;
+				c8.reset();
+				c8.load_rom(dropped_filedir);
+				auto_cycling = true;
 			}
 		}
 
@@ -113,7 +129,8 @@ int main(int argc, char* args[])
 		c8.screen.draw();
 		c8.print_and_draw();
 
-		SDL_SetRenderDrawColor(SDL::Context::renderer, 255, 255, 255, 255);
+		SDL_SetRenderDrawColor(SDL::Context::renderer, 0x69, 0x77, 0x9b, 255);
+
 		SDL_RenderPresent(SDL::Context::renderer);
 
 		int delay = (int)fps - (SDL_GetTicks() - startFTime);

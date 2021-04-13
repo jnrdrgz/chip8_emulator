@@ -8,6 +8,7 @@ Screen::Screen(int scale = 10) : scale{ scale } {
 	rct.w = sw;
 	rct.h = sh;
 	pixels = (Uint32*)malloc(sizeof(Uint32) * sw * sh);
+	max_p = sw * sh;
 	texture = SDL_CreateTexture(SDL::Context::renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, sw, sh);
 	clear();
 }
@@ -50,9 +51,23 @@ bool Screen::sprite(int x, int y, int n, int I, unsigned char* mem) {
 		bool collision = true;
 		for (int i = 0; i < scale; i++) {
 			for (int j = 0; j < scale; j++) {
-				Uint32 v = pixels[p];
-				pixels[p] ^= 0xFFFFFFFF;
-				collision = v && !pixels[p] && collision;
+				if (p < max_p) {
+					Uint32 v = pixels[p];
+					//hack to use another tone of white :p
+					if (pixels[p] == 0xfff0ece2) {
+						pixels[p] = 0xFFFFFFFF;
+					}
+
+					//this is the "important" part
+					pixels[p] ^= 0xFFFFFFFF;
+					collision = v && !pixels[p] && collision;
+					
+					//hack end
+					if (pixels[p]) {
+						pixels[p] = 0xfff0ece2;
+
+					}
+				}
 				p += 1;
 			}
 			p += sw;
@@ -65,7 +80,6 @@ bool Screen::sprite(int x, int y, int n, int I, unsigned char* mem) {
 	bool collision = false;
 	for (int h = 0; h < n; h++) {
 		unsigned char nn = *val;
-		//printf("will draw %d\n", nn);
 		int ind = 7 * scale;
 
 
